@@ -1,0 +1,25 @@
+# Base image
+FROM ubuntu:22.04
+
+# Set environment variables with default values
+ENV ROBOT_VERSION=latest
+ENV UID=123456
+ENV PASSWORD=password
+ARG ARCH
+
+# Install dependencies
+RUN apt-get update && apt-get install -y curl && apt-get clean
+
+# Add a directory for the robot
+RUN mkdir -p /robot
+
+# Download the latest version of the robot binary
+RUN curl -L https://www.fmz.com/dist/robot_${ARCH}.tar.gz -o /robot/robot.tar.gz && \
+    tar -xzvf /robot/robot.tar.gz -C /robot && \
+    rm /robot/robot.tar.gz
+
+# Set the working directory
+WORKDIR /robot
+
+# Run the robot with the specified UID and PASSWORD
+CMD ["sh", "-c", "./robot -s node.fmz.com/${UID} -p ${PASSWORD}"]
