@@ -1,0 +1,36 @@
+# 使用特定版本的基础镜像
+FROM ubuntu:20.04
+
+# 更新软件包列表并安装必要的软件和依赖库
+RUN apt-get update && apt-get install -y wget tar libssl1.1
+
+# 设置工作目录
+WORKDIR /app
+
+# 创建入口脚本
+RUN echo '#!/bin/sh' > /entrypoint.sh \
+    && echo '' >> /entrypoint.sh \
+    && echo 'if [ -z "$UID" ] || [ -z "$PASSWORD" ]; then' >> /entrypoint.sh \
+    && echo '    echo "错误：必须设置 UID 和 PASSWORD 环境变量"' >> /entrypoint.sh \
+    && echo '    exit 1' >> /entrypoint.sh \
+    && echo 'fi' >> /entrypoint.sh \
+    && echo '' >> /entrypoint.sh \
+    && echo '# 如果 robot 文件不存在' >> /entrypoint.sh \
+    && echo 'if [ ! -f robot ]; then' >> /entrypoint.sh \
+    && echo '    # 如果压缩包不存在，下载它' >> /entrypoint.sh \
+    && echo '    if [ ! -f robot_linux_amd64.tar.gz ]; then' >> /entrypoint.sh \
+    && echo '        wget https://www.fmz.com/dist/robot_linux_amd64.tar.gz' >> /entrypoint.sh \
+    && echo '    fi' >> /entrypoint.sh \
+    && echo '    # 解压并设置权限' >> /entrypoint.sh \
+    && echo '    tar -xzvf robot_linux_amd64.tar.gz' >> /entrypoint.sh \
+    && echo '    chmod +x robot' >> /entrypoint.sh \
+    && echo 'fi' >> /entrypoint.sh \
+    && echo '' >> /entrypoint.sh \
+    && echo '# 运行程序' >> /entrypoint.sh \
+    && echo './robot -s node.fmz.com/"$UID" -p "$PASSWORD"' >> /entrypoint.sh
+
+# 给予入口脚本执行权限
+RUN chmod +x /entrypoint.sh
+
+# 设置入口点
+ENTRYPOINT ["/entrypoint.sh"]
